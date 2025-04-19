@@ -75,6 +75,28 @@ class CameraMIDIDevice(mglw.WindowConfig):
         observer.schedule(event_handler, path=".", recursive=False)
         observer.start()
 
+    def on_key_event(self, key, action, modifiers):
+        print('key press detected')
+        print(key, action)
+        if key == 99 and action == 'ACTION_PRESS':  # 'C' key and key press action
+            print('key press detected')
+            self.note_off_all()
+
+    def on_mouse_position_event(self, x, y, dx, dy):
+        print("Mouse position:", x, y, dx, dy)
+
+    def on_mouse_drag_event(self, x, y, dx, dy):
+        print("Mouse drag:", x, y, dx, dy)
+
+    def on_mouse_scroll_event(self, x_offset: float, y_offset: float):
+        print("Mouse wheel:", x_offset, y_offset)
+
+    def on_mouse_press_event(self, x, y, button):
+        print("Mouse button {} pressed at {}, {}".format(button, x, y))
+
+    def on_mouse_release_event(self, x: int, y: int, button: int):
+        print("Mouse button {} released at {}, {}".format(button, x, y))
+
     def load_config(self):
         with open("config.yml", "r") as f:
             self.config = yaml.safe_load(f)
@@ -129,14 +151,19 @@ class CameraMIDIDevice(mglw.WindowConfig):
                 note = base_note
 
                 if use_scale:
-                    avg_color_uint8 = np.uint8([[avg_color]])
-                    hsv = cv2.cvtColor(avg_color_uint8, cv2.COLOR_RGB2HSV)
-                    hue = hsv[0][0][0]
+                    avg_color_bgr = np.mean(cell, axis=(0, 1))  # No reshape needed
+                    avg_color_uint8 = np.clip(avg_color_bgr, 0, 255).astype(np.uint8).reshape(1, 1, 3)
+                    hsv = cv2.cvtColor(avg_color_uint8, cv2.COLOR_BGR2HSV)
+                    hue = hsv[0, 0, 0]
+
                     scale_idx = int((hue / 180.0) * len(MAJOR_SCALE)) % len(MAJOR_SCALE)
                     note += MAJOR_SCALE[scale_idx]
 
                 if luminosity > threshold and not self.note_state[row][col]:
-                    velocity = int(np.clip(avg_color[0] / 255.0 * 127, 112, 127))
+                    # Map luminosity above threshold to velocity (range 1-127)
+                    over_threshold = luminosity - threshold
+                    max_luminosity = 255 - threshold
+                    velocity = int(np.clip((over_threshold / max_luminosity) * 127, 55, 127))
                     print(f"Note ON  - Ch:{channel} Note:{note} Vel:{velocity} at ({row},{col})")
                     midi_message = rtmidi.MidiMessage.noteOn(channel, note, velocity)
                     self.midi_out.sendMessage(midi_message)
@@ -150,6 +177,21 @@ class CameraMIDIDevice(mglw.WindowConfig):
                     self.note_state[row][col] = False
 
         self.last_frame = frame
+
+    def note_off_all(self):
+        """Turns off all active notes."""
+        print('turning off notes')
+        for row in range(self.grid_rows):
+            for col in range(self.grid_cols):
+                #if self.note_state[row][col]:
+                    cell_cfg = self.square_config[row][col]
+                    if cell_cfg is None:
+                        continue
+                    note = cell_cfg['base_note']
+                    channel = cell_cfg['channel']
+                    self.midi_out.sendMessage(rtmidi.MidiMessage.noteOff(channel, note))
+                    print(f"Note OFF - Ch:{channel} Note:{note} (all notes off) at ({row},{col})")
+                    self.note_state[row][col] = False
 
     def render(self, time, frametime):
         if self.last_frame is not None:
@@ -233,6 +275,7 @@ class CameraMIDIDevice(mglw.WindowConfig):
                     vao = self.ctx.simple_vertex_array(feedback_prog, vbo, 'in_position')
                     vao.render(moderngl.TRIANGLES)
                     self.active_cells[row][col] *= 0.92
+
 
     def on_render(self, time, frametime):
         self.render(time, frametime)

@@ -1,0 +1,148 @@
+midi:
+  trigger:
+    threshold: 50
+  squares:
+    - row: 0
+      col: 0
+      base_note: 36
+      channel: 0
+    - row: 0
+      col: 1
+      base_note: 37
+      channel: 1
+    - row: 0
+      col: 2
+      base_note: 38
+      channel: 2
+    - row: 0
+      col: 3
+      base_note: 39
+      channel: 3
+    - row: 0
+      col: 4
+      base_note: 40
+      channel: 4
+    - row: 0
+      col: 5
+      base_note: 41
+      channel: 5
+    - row: 1
+      col: 0
+      base_note: 42
+      channel: 6
+    - row: 1
+      col: 1
+      base_note: 43
+      channel: 7
+    - row: 1
+      col: 2
+      base_note: 44
+      channel: 8
+    - row: 1
+      col: 3
+      base_note: 45
+      channel: 9
+    - row: 1
+      col: 4
+      base_note: 46
+      channel: 10
+    - row: 1
+      col: 5
+      base_note: 47
+      channel: 11
+    - row: 2
+      col: 0
+      base_note: 48
+      channel: 12
+    - row: 2
+      col: 1
+      base_note: 49
+      channel: 13
+    - row: 2
+      col: 2
+      base_note: 50
+      channel: 14
+    - row: 2
+      col: 3
+      base_note: 51
+      channel: 15
+    - row: 2
+      col: 4
+      base_note: 52
+      channel: 16
+    - row: 2
+      col: 5
+      base_note: 53
+      channel: 17
+    - row: 3
+      col: 0
+      base_note: 54
+      channel: 18
+    - row: 3
+      col: 1
+      base_note: 55
+      channel: 19
+    - row: 3
+      col: 2
+      base_note: 56
+      channel: 20
+    - row: 3
+      col: 3
+      base_note: 57
+      channel: 21
+    - row: 3
+      col: 4
+      base_note: 58
+      channel: 22
+    - row: 3
+      col: 5
+      base_note: 59
+      channel: 23
+    - row: 4
+      col: 0
+      base_note: 60
+      channel: 24
+    - row: 4
+      col: 1
+      base_note: 61
+      channel: 25
+    - row: 4
+      col: 2
+      base_note: 62
+      channel: 26
+    - row: 4
+      col: 3
+      base_note: 63
+      channel: 27
+    - row: 4
+      col: 4
+      base_note: 64
+      channel: 28
+    - row: 4
+      col: 5
+      base_note: 65
+      channel: 29
+    - row: 5
+      col: 0
+      base_note: 66
+      channel: 30
+    - row: 5
+      col: 1
+      base_note: 67
+      channel: 31
+    - row: 5
+      col: 2
+      base_note: 68
+      channel: 32
+    - row: 5
+      col: 3
+      base_note: 69
+      channel: 33
+    - row: 5
+      col: 4
+      base_note: 70
+      channel: 34
+    - row: 5
+      col: 5
+      base_note: 71
+      channel: 35

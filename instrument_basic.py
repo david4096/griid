@@ -32,6 +32,7 @@ while True:
             velocity = message[2]
             print(f"Note ON - Channel: {channel}, Note: {note}, Velocity: {velocity}")
             # DRUMs fs.program_select(0, sfid, 0, 36)
+            fs.program_select(0, sfid, 0, channel)
             fs.noteon(0, note, velocity)
         elif status == 0x80 or (status == 0x90 and message[2] == 0):
             note = message[1]

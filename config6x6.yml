@@ -1,6 +1,6 @@
 midi:
   trigger:
-    threshold: 50
+    threshold: 30
   squares:
     - row: 0
       col: 0

@@ -34,6 +34,9 @@ class CameraMIDIDevice(mglw.WindowConfig):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.load_config()
+        self.dragging = False
+        self.drag_origin = None
+        self.drag_cell = None
 
         self.texture = self.ctx.texture(self.window_size, 3, dtype='f1')
         self.quad = geometry.quad_2d()
@@ -86,16 +89,48 @@ class CameraMIDIDevice(mglw.WindowConfig):
         print("Mouse position:", x, y, dx, dy)
 
     def on_mouse_drag_event(self, x, y, dx, dy):
-        print("Mouse drag:", x, y, dx, dy)
+        if self.dragging and self.drag_cell:
+            row, col = self.drag_cell
+            cfg = self.square_config[row][col]
+            if cfg is None:
+                return
+
+            # Vertical drag controls pitch bend: from -8192 to +8191
+            max_range = 100  # Max pixel delta maps to full pitch bend
+            pitch_delta = np.clip((y - self.drag_origin[1]) / max_range, -1.0, 1.0)
+            bend_value = int(8192 + pitch_delta * 8192)
+            bend_value = np.clip(bend_value, 0, 16383)
+
+            channel = cfg['channel']
+            msb = (bend_value >> 7) & 0x7F
+            lsb = bend_value & 0x7F
+
+            # Send pitch bend message (status byte 0xE0 + channel)
+            self.midi_out.sendMessage(0xE0 + channel, lsb, msb)
+            print(f"Pitch Bend on ({row},{col}) Ch:{channel} Bend:{bend_value}")
+
 
     def on_mouse_scroll_event(self, x_offset: float, y_offset: float):
         print("Mouse wheel:", x_offset, y_offset)
 
     def on_mouse_press_event(self, x, y, button):
-        print("Mouse button {} pressed at {}, {}".format(button, x, y))
+        print(f"Mouse button {button} pressed at {x}, {y}")
+        self.dragging = True
+        self.drag_origin = (x, y)
 
-    def on_mouse_release_event(self, x: int, y: int, button: int):
-        print("Mouse button {} released at {}, {}".format(button, x, y))
+        col = int((x / self.window_size[0]) * self.grid_cols)
+        row = int(((self.window_size[1] - y) / self.window_size[1]) * self.grid_rows)
+
+        if 0 <= row < self.grid_rows and 0 <= col < self.grid_cols:
+            self.drag_cell = (row, col)
+
+
+    def on_mouse_release_event(self, x, y, button):
+        print(f"Mouse button {button} released at {x}, {y}")
+        self.dragging = False
+        self.drag_origin = None
+        self.drag_cell = None
+
 
     def load_config(self):
         with open("config.yml", "r") as f:
@@ -163,7 +198,7 @@ class CameraMIDIDevice(mglw.WindowConfig):
                     # Map luminosity above threshold to velocity (range 1-127)
                     over_threshold = luminosity - threshold
                     max_luminosity = 255 - threshold
-                    velocity = int(np.clip((over_threshold / max_luminosity) * 127, 55, 127))
+                    velocity = int(np.clip((over_threshold / max_luminosity) * 127, 99, 127))
                     print(f"Note ON  - Ch:{channel} Note:{note} Vel:{velocity} at ({row},{col})")
                     midi_message = rtmidi.MidiMessage.noteOn(channel, note, velocity)
                     self.midi_out.sendMessage(midi_message)
@@ -171,7 +206,7 @@ class CameraMIDIDevice(mglw.WindowConfig):
                     self.active_cells[row][col] = 1.0
                     self.last_colors[row][col] = tuple(avg_color / 255.0)
 
-                elif luminosity <= threshold - 5 and self.note_state[row][col]:
+                elif luminosity <= threshold and self.note_state[row][col]:
                     self.midi_out.sendMessage(rtmidi.MidiMessage.noteOff(channel, note))
                     print(f"Note OFF - Ch:{channel} Note:{note} at ({row},{col})")
                     self.note_state[row][col] = False
